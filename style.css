@@ -1,0 +1,226 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #1f2937;
+}
+
+/* HEADER */
+
+.header {
+  height: 70px;
+  background: #111827;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 60px;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+nav {
+  display: flex;
+  gap: 30px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* HERO */
+
+.hero {
+  min-height: 450px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 60px;
+}
+
+.hero h1 {
+  font-size: 52px;
+  max-width: 700px;
+  margin-bottom: 25px;
+}
+
+.hero h1 span {
+  color: #2563eb;
+}
+
+.hero p {
+  font-size: 20px;
+  max-width: 600px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+
+  border: none;
+
+  padding: 15px 30px;
+
+  border-radius: 8px;
+
+  font-size: 16px;
+
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+/* STATISTIQUES */
+
+.stats {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 25px;
+
+  padding: 0 60px 60px;
+}
+
+.card {
+  background: white;
+
+  padding: 30px;
+
+  border-radius: 12px;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  text-align: center;
+}
+
+.card h2 {
+  font-size: 30px;
+
+  margin-bottom: 10px;
+}
+
+/* FOOTER */
+
+footer {
+  background: #111827;
+
+  color: white;
+
+  text-align: center;
+
+  padding: 25px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 800px) {
+  .header {
+    padding: 0 20px;
+  }
+
+  nav {
+    display: none;
+  }
+
+  .hero {
+    padding: 40px 20px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+}
+/* FORMULAIRE CLIENT */
+
+form {
+  background: white;
+  max-width: 600px;
+  margin: 20px 60px 60px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+/* TABLEAU DES CLIENTS */
+
+.clients-section {
+  margin: 0 60px 60px;
+}
+
+.clients-section h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+#clientsTable {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+#clientsTable th,
+#clientsTable td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#clientsTable th {
+  background: #111827;
+  color: white;
+}
+
+#clientsTable tr:hover {
+  background: #f9fafb;
+}
