@@ -5,94 +5,117 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>MySales - Clients</title>
+    <title>MYSALES - Clients</title>
 
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
-    <header class="header">
-      <div class="logo">MySales</div>
+    <header>
+      <h1>MYSALES</h1>
 
       <nav>
-        <a href="index.html">Accueil</a>
+        <a href="index.html"> Accueil </a>
 
-        <a href="clients.html">Clients</a>
+        <a href="clients.html"> Clients </a>
 
-        <a href="#">Produits</a>
+        <a href="produits.html"> Produits </a>
 
-        <a href="#">Ventes</a>
+        <a href="ventes.html"> Ventes </a>
 
-        <a href="#">Dashboard</a>
+        <a href="dashboard.html"> Dashboard </a>
       </nav>
     </header>
 
     <main>
-      <section class="hero">
-        <div>
-          <h1>Gestion des <span>clients</span></h1>
+      <section class="page-header">
+        <h2>Gestion des clients</h2>
 
-          <p>Consultez et gérez les clients de votre entreprise.</p>
-
-          <form id="clientForm">
-
-    <div class="form-group">
-        <label for="nom">Nom complet</label>
-        <input type="text" id="nom" placeholder="Ex : Jean Mukendi" required>
-    </div>
-
-    <div class="form-group">
-        <label for="telephone">Téléphone</label>
-        <input type="tel" id="telephone" placeholder="Ex : 0812345678" required>
-    </div>
-
-    <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="Ex : jean@email.com">
-    </div>
-
-    <div class="form-group">
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" placeholder="Ex : Kinshasa" required>
-    </div>
-
-    <button type="submit">
-        Enregistrer le client
-    </button>
-
-</form></button>
-        </div>
+        <p>Ajoutez, recherchez, modifiez et supprimez vos clients.</p>
       </section>
 
-      <section class="clients-section">
+      <!-- =========================
+             FORMULAIRE
+        ========================== -->
 
-    <h2>Liste des clients</h2>
+      <section class="form-section">
+        <h3>Ajouter un client</h3>
 
-    <table id="clientsTable">
+        <form id="clientForm">
+          <div>
+            <label for="nomComplet"> Nom complet </label>
 
-        <thead>
+            <input type="text" id="nomComplet" required />
+          </div>
 
+          <div>
+            <label for="telephone"> Téléphone </label>
+
+            <input type="text" id="telephone" required />
+          </div>
+
+          <div>
+            <label for="email"> Email </label>
+
+            <input type="email" id="email" />
+          </div>
+
+          <div>
+            <label for="ville"> Ville </label>
+
+            <input type="text" id="ville" />
+          </div>
+
+          <button type="submit">Enregistrer le client</button>
+        </form>
+      </section>
+
+      <!-- =========================
+             RECHERCHE
+        ========================== -->
+
+      <section class="form-section">
+        <h3>Rechercher un client</h3>
+
+        <input
+          type="text"
+          id="rechercheClient"
+          placeholder="Nom, téléphone ou ville..."
+        />
+      </section>
+
+      <!-- =========================
+             TABLEAU CLIENTS
+        ========================== -->
+
+      <section class="table-section">
+        <h3>Liste des clients</h3>
+
+        <table>
+          <thead>
             <tr>
-                <th>Nom</th>
-                <th>Téléphone</th>
-                <th>Email</th>
-                <th>Ville</th>
+              <th>ID</th>
+
+              <th>Nom complet</th>
+
+              <th>Téléphone</th>
+
+              <th>Email</th>
+
+              <th>Ville</th>
+
+              <th>Actions</th>
             </tr>
+          </thead>
 
-        </thead>
-
-        <tbody id="clientsList">
-
-        </tbody>
-
-    </table>
-
-</section>
+          <tbody id="clientsList">
+            <tr>
+              <td colspan="6">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </main>
-
-    <footer>
-      <p>© 2026 MySales - Application de gestion des ventes</p>
-    </footer>
 
     <script src="script.js"></script>
   </body>

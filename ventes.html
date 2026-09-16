@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>MYSALES - Ventes</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header>
+      <h1>MYSALES</h1>
+
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="clients.html">Clients</a>
+        <a href="produits.html">Produits</a>
+        <a href="ventes.html">Ventes</a>
+        <a href="dashboard.html">Dashboard</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page-header">
+        <h2>Gestion des ventes</h2>
+        <p>Enregistrez les ventes de vos clients.</p>
+      </section>
+
+      <section class="form-section">
+        <h3>Enregistrer une vente</h3>
+
+        <form id="venteForm">
+          <div>
+            <label for="clientVente">Client</label>
+
+            <select id="clientVente" required>
+              <option value="">Sélectionnez un client</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="produitVente">Produit</label>
+
+            <select id="produitVente" required>
+              <option value="">Sélectionnez un produit</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="quantiteVente">Quantité</label>
+
+            <input
+              type="number"
+              id="quantiteVente"
+              min="1"
+              step="1"
+              value="1"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="totalVente">Total</label>
+
+            <input type="text" id="totalVente" value="0.00 $" readonly />
+          </div>
+
+          <button type="submit">Enregistrer la vente</button>
+        </form>
+      </section>
+
+      <section class="table-section">
+        <h3>Liste des ventes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th>Total</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+
+          <tbody id="ventesList">
+            <tr>
+              <td colspan="7">Chargement des ventes...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="ventes.js"></script>
+  </body>
+</html>

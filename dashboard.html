@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>MYSALES - Dashboard</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Bibliothèque pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <header>
+      <h1>MYSALES</h1>
+
+      <nav>
+        <a href="index.html"> Accueil </a>
+
+        <a href="clients.html"> Clients </a>
+
+        <a href="produits.html"> Produits </a>
+
+        <a href="ventes.html"> Ventes </a>
+
+        <a href="dashboard.html"> Dashboard </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page-header">
+        <h2>Dashboard commercial</h2>
+
+        <p>Analyse de l'activité de MYSALES.</p>
+      </section>
+
+      <!-- =========================
+             KPI
+        ========================== -->
+
+      <section class="dashboard-cards">
+        <div class="dashboard-card">
+          <h3>Chiffre d'affaires</h3>
+
+          <p id="chiffreAffaires">Chargement...</p>
+        </div>
+
+        <div class="dashboard-card">
+          <h3>Nombre de ventes</h3>
+
+          <p id="nombreVentes">Chargement...</p>
+        </div>
+
+        <div class="dashboard-card">
+          <h3>Produits vendus</h3>
+
+          <p id="produitsVendus">Chargement...</p>
+        </div>
+
+        <div class="dashboard-card">
+          <h3>Clients</h3>
+
+          <p id="nombreClients">Chargement...</p>
+        </div>
+      </section>
+
+      <!-- =========================
+             GRAPHIQUES
+        ========================== -->
+
+      <section class="dashboard-charts">
+        <div class="chart-container">
+          <h3>Évolution du chiffre d'affaires</h3>
+
+          <canvas id="caChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Produits les plus vendus</h3>
+
+          <canvas id="produitsChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3>Ventes par client</h3>
+
+          <canvas id="clientsChart"></canvas>
+        </div>
+      </section>
+
+      <!-- =========================
+             DERNIÈRES VENTES
+        ========================== -->
+
+      <section class="table-section">
+        <h3>Dernières ventes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+
+              <th>Client</th>
+
+              <th>Produit</th>
+
+              <th>Quantité</th>
+
+              <th>Total</th>
+
+              <th>Date</th>
+            </tr>
+          </thead>
+
+          <tbody id="dashboardVentes">
+            <tr>
+              <td colspan="6">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- =========================
+             STOCK
+        ========================== -->
+
+      <section class="table-section">
+        <h3>État des stocks</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Produit</th>
+
+              <th>Prix</th>
+
+              <th>Stock disponible</th>
+            </tr>
+          </thead>
+
+          <tbody id="dashboardStocks">
+            <tr>
+              <td colspan="3">Chargement...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="dashboard.js"></script>
+  </body>
+</html>
