@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Utilisateurs - MYSALES</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="header">
+
+        <div class="logo">
+            MySales
+        </div>
+
+        <nav class="nav">
+            <a href="/index.html">Accueil</a>
+            <a href="/clients.html">Clients</a>
+            <a href="/produits.html">Produits</a>
+            <a href="/ventes.html">Ventes</a>
+            <a href="/dashboard.html">Dashboard</a>
+            <a href="/utilisateurs.html">Utilisateurs</a>
+        </nav>
+
+        <div class="user-menu">
+
+            <div class="user-info">
+                <strong id="nomUtilisateur">
+                    Chargement...
+                </strong>
+
+                <span id="roleUtilisateur"></span>
+            </div>
+
+            <button
+                type="button"
+                id="boutonDeconnexion">
+                Déconnexion
+            </button>
+
+        </div>
+
+    </header>
+
+    <main class="container">
+
+        <h1>Gestion des utilisateurs</h1>
+
+        <p>
+            Créez et gérez les comptes utilisateurs de MYSALES.
+        </p>
+
+        <!-- ==================================================
+             FORMULAIRE UTILISATEUR
+             ================================================== -->
+
+        <section class="card">
+
+            <h2 id="titreFormulaireUtilisateur">
+                Ajouter un utilisateur
+            </h2>
+
+            <form id="utilisateurForm">
+
+                <div class="form-group">
+
+                    <label for="nomUtilisateurForm">
+                        Nom complet
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nomUtilisateurForm"
+                        required
+                        placeholder="Ex : Jean Dupont"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="emailUtilisateur">
+                        Adresse e-mail
+                    </label>
+
+                    <input
+                        type="email"
+                        id="emailUtilisateur"
+                        required
+                        placeholder="Ex : jean@gmail.com"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="motDePasseUtilisateur">
+                        Mot de passe
+                    </label>
+
+                    <input
+                        type="password"
+                        id="motDePasseUtilisateur"
+                        placeholder="Minimum 6 caractères"
+                    >
+
+                    <small>
+                        Laisser vide lors d'une modification
+                        pour conserver le mot de passe actuel.
+                    </small>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="roleUtilisateurForm">
+                        Rôle
+                    </label>
+
+                    <select id="roleUtilisateurForm" required>
+
+                        <option value="vendeur">
+                            Vendeur
+                        </option>
+
+                        <option value="admin">
+                            Administrateur
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <button
+                    type="submit"
+                    id="boutonUtilisateur">
+
+                    Enregistrer l'utilisateur
+
+                </button>
+
+                <button
+                    type="button"
+                    id="boutonAnnulerUtilisateur"
+                    style="display: none;">
+
+                    Annuler
+
+                </button>
+
+            </form>
+
+        </section>
+
+        <!-- ==================================================
+             LISTE DES UTILISATEURS
+             ================================================== -->
+
+        <section class="card">
+
+            <h2>Liste des utilisateurs</h2>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Date de création</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="utilisateursList">
+
+                        <tr>
+
+                            <td colspan="6">
+                                Chargement...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="utilisateurs.js"></script>
+    <script src="auth.js"></script>
+
+</body>
+
+</html>

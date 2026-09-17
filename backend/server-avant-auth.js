@@ -1,247 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const session = require("express-session");
-const bcrypt = require("bcryptjs");
 const pool = require("./db");
 
 const app = express();
 const PORT = 3000;
 
 // ======================================================
-// CONFIGURATION
-// ======================================================
-
-const FRONTEND = path.resolve(__dirname, "..");
-
-// ======================================================
 // MIDDLEWARES
 // ======================================================
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  }),
-);
-
+app.use(cors());
 app.use(express.json());
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 8,
-    },
-  }),
-);
+// Servir les fichiers HTML, CSS et JavaScript
+// du dossier principal MYSALES
+app.use(express.static(path.join(__dirname, "..")));
 
 // ======================================================
-// OUTILS D'AUTHENTIFICATION
-// ======================================================
-
-function requireAuth(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).json({
-      message: "Accès non autorisé. Veuillez vous connecter.",
-    });
-  }
-
-  next();
-}
-
-// ======================================================
-// OUTIL : ADMIN UNIQUEMENT
-// ======================================================
-
-function requireAdmin(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).json({
-      message: "Accès non autorisé. Veuillez vous connecter.",
-    });
-  }
-
-  if (req.session.user.role !== "admin") {
-    return res.status(403).json({
-      message: "Accès interdit. Réservé à l'administrateur.",
-    });
-  }
-
-  next();
-}
-
-function requirePageAuth(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login.html");
-  }
-
-  next();
-}
-
-function requireAdminPage(req, res, next) {
-  if (!req.session.user) {
-    return res.redirect("/login.html");
-  }
-
-  if (req.session.user.role !== "admin") {
-    return res.redirect("/index.html");
-  }
-
-  next();
-}
-
-// ======================================================
-// AUTHENTIFICATION
-// ======================================================
-
-// POST - connexion
-app.post("/api/login", async (req, res) => {
-  try {
-    const { email, mot_de_passe } = req.body;
-
-    if (!email || !mot_de_passe) {
-      return res.status(400).json({
-        message: "L'email et le mot de passe sont obligatoires.",
-      });
-    }
-
-    const resultat = await pool.query(
-      `
-      SELECT
-        id,
-        nom,
-        email,
-        mot_de_passe,
-        role
-      FROM utilisateurs
-      WHERE email = $1
-      `,
-      [email.trim().toLowerCase()],
-    );
-
-    if (resultat.rows.length === 0) {
-      return res.status(401).json({
-        message: "Email ou mot de passe incorrect.",
-      });
-    }
-
-    const utilisateur = resultat.rows[0];
-
-    const motDePasseCorrect = await bcrypt.compare(
-      mot_de_passe,
-      utilisateur.mot_de_passe,
-    );
-
-    if (!motDePasseCorrect) {
-      return res.status(401).json({
-        message: "Email ou mot de passe incorrect.",
-      });
-    }
-
-    req.session.user = {
-      id: utilisateur.id,
-      nom: utilisateur.nom,
-      email: utilisateur.email,
-      role: utilisateur.role,
-    };
-
-    res.json({
-      message: "Connexion réussie.",
-      utilisateur: req.session.user,
-    });
-  } catch (error) {
-    console.error("Erreur connexion :", error);
-
-    res.status(500).json({
-      message: "Impossible de se connecter.",
-      erreur: error.message,
-    });
-  }
-});
-
-// GET - vérifier la session
-app.get("/api/session", (req, res) => {
-  if (!req.session.user) {
-    return res.json({
-      connecte: false,
-    });
-  }
-
-  res.json({
-    connecte: true,
-    utilisateur: req.session.user,
-  });
-});
-
-// POST - déconnexion
-app.post("/api/logout", (req, res) => {
-  req.session.destroy((error) => {
-    if (error) {
-      console.error("Erreur déconnexion :", error);
-
-      return res.status(500).json({
-        message: "Impossible de se déconnecter.",
-      });
-    }
-
-    res.clearCookie("connect.sid");
-
-    res.json({
-      message: "Déconnexion réussie.",
-    });
-  });
-});
-
-// ======================================================
-// PAGES PROTÉGÉES
+// PAGE PRINCIPALE
 // ======================================================
 
 app.get("/", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login.html");
-  }
-
-  res.sendFile(path.join(FRONTEND, "index.html"));
-});
-
-app.get("/index.html", requirePageAuth, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "index.html"));
-});
-
-app.get("/clients.html", requirePageAuth, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "clients.html"));
-});
-
-app.get("/produits.html", requirePageAuth, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "produits.html"));
-});
-
-app.get("/ventes.html", requirePageAuth, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "ventes.html"));
-});
-
-app.get("/dashboard.html", requirePageAuth, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "dashboard.html"));
-});
-
-// Page utilisateurs : ADMIN UNIQUEMENT
-app.get("/utilisateurs.html", requireAdminPage, (req, res) => {
-  res.sendFile(path.join(FRONTEND, "utilisateurs.html"));
+  res.sendFile(path.join(__dirname, "..", "index.html"));
 });
 
 // ======================================================
-// FICHIERS STATIQUES
-// ======================================================
-
-app.use(express.static(FRONTEND));
-
-// ======================================================
-// TEST POSTGRESQL
+// TEST DE CONNEXION À POSTGRESQL
 // ======================================================
 
 app.get("/api/test-db", async (req, res) => {
@@ -263,263 +48,11 @@ app.get("/api/test-db", async (req, res) => {
 });
 
 // ======================================================
-// UTILISATEURS
-// ADMIN UNIQUEMENT
-// ======================================================
-
-// GET - récupérer tous les utilisateurs
-app.get("/api/utilisateurs", requireAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        nom,
-        email,
-        role,
-        date_creation
-      FROM utilisateurs
-      ORDER BY id DESC
-    `);
-
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Erreur récupération utilisateurs :", error);
-
-    res.status(500).json({
-      message: "Impossible de récupérer les utilisateurs.",
-      erreur: error.message,
-    });
-  }
-});
-
-// POST - créer un utilisateur
-app.post("/api/utilisateurs", requireAdmin, async (req, res) => {
-  try {
-    const { nom, email, mot_de_passe, role } = req.body;
-
-    if (!nom || !email || !mot_de_passe || !role) {
-      return res.status(400).json({
-        message:
-          "Le nom, l'email, le mot de passe et le rôle sont obligatoires.",
-      });
-    }
-
-    const roleValide = ["admin", "vendeur"].includes(role);
-
-    if (!roleValide) {
-      return res.status(400).json({
-        message: "Le rôle doit être admin ou vendeur.",
-      });
-    }
-
-    if (mot_de_passe.length < 6) {
-      return res.status(400).json({
-        message: "Le mot de passe doit contenir au moins 6 caractères.",
-      });
-    }
-
-    const motDePasseHash = await bcrypt.hash(mot_de_passe, 12);
-
-    const result = await pool.query(
-      `
-      INSERT INTO utilisateurs (
-        nom,
-        email,
-        mot_de_passe,
-        role
-      )
-      VALUES ($1, $2, $3, $4)
-      RETURNING
-        id,
-        nom,
-        email,
-        role,
-        date_creation
-      `,
-      [nom.trim(), email.trim().toLowerCase(), motDePasseHash, role],
-    );
-
-    res.status(201).json({
-      message: "Utilisateur créé avec succès.",
-      utilisateur: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Erreur création utilisateur :", error);
-
-    if (error.code === "23505") {
-      return res.status(409).json({
-        message: "Cette adresse e-mail existe déjà.",
-      });
-    }
-
-    res.status(500).json({
-      message: "Impossible de créer l'utilisateur.",
-      erreur: error.message,
-    });
-  }
-});
-
-// PUT - modifier un utilisateur
-app.put("/api/utilisateurs/:id", requireAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    const { nom, email, mot_de_passe, role } = req.body;
-
-    if (!Number.isInteger(id)) {
-      return res.status(400).json({
-        message: "ID utilisateur invalide.",
-      });
-    }
-
-    if (!nom || !email || !role) {
-      return res.status(400).json({
-        message: "Le nom, l'email et le rôle sont obligatoires.",
-      });
-    }
-
-    if (!["admin", "vendeur"].includes(role)) {
-      return res.status(400).json({
-        message: "Le rôle doit être admin ou vendeur.",
-      });
-    }
-
-    let result;
-
-    // Si un nouveau mot de passe est fourni
-    if (mot_de_passe && mot_de_passe.trim() !== "") {
-      if (mot_de_passe.length < 6) {
-        return res.status(400).json({
-          message: "Le mot de passe doit contenir au moins 6 caractères.",
-        });
-      }
-
-      const motDePasseHash = await bcrypt.hash(mot_de_passe, 12);
-
-      result = await pool.query(
-        `
-        UPDATE utilisateurs
-        SET
-          nom = $1,
-          email = $2,
-          mot_de_passe = $3,
-          role = $4
-        WHERE id = $5
-        RETURNING
-          id,
-          nom,
-          email,
-          role,
-          date_creation
-        `,
-        [nom.trim(), email.trim().toLowerCase(), motDePasseHash, role, id],
-      );
-    } else {
-      result = await pool.query(
-        `
-        UPDATE utilisateurs
-        SET
-          nom = $1,
-          email = $2,
-          role = $3
-        WHERE id = $4
-        RETURNING
-          id,
-          nom,
-          email,
-          role,
-          date_creation
-        `,
-        [nom.trim(), email.trim().toLowerCase(), role, id],
-      );
-    }
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Utilisateur introuvable.",
-      });
-    }
-
-    // Si l'admin modifie son propre compte,
-    // mettre à jour sa session.
-    if (req.session.user.id === id) {
-      req.session.user.nom = result.rows[0].nom;
-      req.session.user.email = result.rows[0].email;
-      req.session.user.role = result.rows[0].role;
-    }
-
-    res.json({
-      message: "Utilisateur modifié avec succès.",
-      utilisateur: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Erreur modification utilisateur :", error);
-
-    if (error.code === "23505") {
-      return res.status(409).json({
-        message: "Cette adresse e-mail existe déjà.",
-      });
-    }
-
-    res.status(500).json({
-      message: "Impossible de modifier l'utilisateur.",
-      erreur: error.message,
-    });
-  }
-});
-
-// DELETE - supprimer un utilisateur
-app.delete("/api/utilisateurs/:id", requireAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (!Number.isInteger(id)) {
-      return res.status(400).json({
-        message: "ID utilisateur invalide.",
-      });
-    }
-
-    // Empêcher l'admin de supprimer son propre compte
-    if (req.session.user.id === id) {
-      return res.status(400).json({
-        message: "Vous ne pouvez pas supprimer votre propre compte.",
-      });
-    }
-
-    const result = await pool.query(
-      `
-      DELETE FROM utilisateurs
-      WHERE id = $1
-      RETURNING id, nom, email, role
-      `,
-      [id],
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Utilisateur introuvable.",
-      });
-    }
-
-    res.json({
-      message: "Utilisateur supprimé avec succès.",
-      utilisateur: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Erreur suppression utilisateur :", error);
-
-    res.status(500).json({
-      message: "Impossible de supprimer l'utilisateur.",
-      erreur: error.message,
-    });
-  }
-});
-
-// ======================================================
 // CLIENTS
 // ======================================================
 
-app.get("/api/clients", requireAuth, async (req, res) => {
+// GET - récupérer tous les clients
+app.get("/api/clients", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -544,7 +77,8 @@ app.get("/api/clients", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/clients", requireAuth, async (req, res) => {
+// POST - ajouter un client
+app.post("/api/clients", async (req, res) => {
   try {
     const { nom_complet, telephone, email, ville } = req.body;
 
@@ -599,7 +133,8 @@ app.post("/api/clients", requireAuth, async (req, res) => {
   }
 });
 
-app.put("/api/clients/:id", requireAuth, async (req, res) => {
+// PUT - modifier un client
+app.put("/api/clients/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -669,7 +204,8 @@ app.put("/api/clients/:id", requireAuth, async (req, res) => {
   }
 });
 
-app.delete("/api/clients/:id", requireAuth, async (req, res) => {
+// DELETE - supprimer un client
+app.delete("/api/clients/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -719,7 +255,8 @@ app.delete("/api/clients/:id", requireAuth, async (req, res) => {
 // PRODUITS
 // ======================================================
 
-app.get("/api/produits", requireAuth, async (req, res) => {
+// GET - récupérer tous les produits
+app.get("/api/produits", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -744,7 +281,8 @@ app.get("/api/produits", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/produits", requireAuth, async (req, res) => {
+// POST - ajouter un produit
+app.post("/api/produits", async (req, res) => {
   try {
     const { nom, description, prix, stock } = req.body;
 
@@ -808,7 +346,8 @@ app.post("/api/produits", requireAuth, async (req, res) => {
   }
 });
 
-app.put("/api/produits/:id", requireAuth, async (req, res) => {
+// PUT - modifier un produit
+app.put("/api/produits/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -887,7 +426,8 @@ app.put("/api/produits/:id", requireAuth, async (req, res) => {
   }
 });
 
-app.delete("/api/produits/:id", requireAuth, async (req, res) => {
+// DELETE - supprimer un produit
+app.delete("/api/produits/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -937,7 +477,8 @@ app.delete("/api/produits/:id", requireAuth, async (req, res) => {
 // VENTES
 // ======================================================
 
-app.get("/api/ventes", requireAuth, async (req, res) => {
+// GET - récupérer toutes les ventes
+app.get("/api/ventes", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -969,7 +510,8 @@ app.get("/api/ventes", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/api/ventes", requireAuth, async (req, res) => {
+// POST - enregistrer une vente
+app.post("/api/ventes", async (req, res) => {
   const client = await pool.connect();
 
   try {
@@ -992,6 +534,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
 
     await client.query("BEGIN");
 
+    // Vérifier le client
     const clientResult = await client.query(
       `
       SELECT id, nom_complet
@@ -1009,6 +552,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
       });
     }
 
+    // Récupérer le produit et verrouiller sa ligne
     const produitResult = await client.query(
       `
       SELECT
@@ -1033,6 +577,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
 
     const produit = produitResult.rows[0];
 
+    // Vérifier le stock
     if (produit.stock < quantiteNumerique) {
       await client.query("ROLLBACK");
 
@@ -1044,6 +589,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
     const prixUnitaire = Number(produit.prix);
     const total = prixUnitaire * quantiteNumerique;
 
+    // Créer la vente
     const venteResult = await client.query(
       `
       INSERT INTO ventes (
@@ -1062,6 +608,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
 
     const vente = venteResult.rows[0];
 
+    // Créer le détail de la vente
     await client.query(
       `
       INSERT INTO details_vente (
@@ -1075,6 +622,7 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
       [vente.id, produitId, quantiteNumerique, prixUnitaire],
     );
 
+    // Diminuer le stock
     const stockResult = await client.query(
       `
       UPDATE produits
@@ -1136,4 +684,3 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Serveur MYSALES démarré sur http://localhost:${PORT}`);
-});

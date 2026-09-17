@@ -16,12 +16,22 @@
       <div class="logo">MySales</div>
 
       <nav>
-        <a href="#">Accueil</a>
-        <a href="#">Clients</a>
-        <a href="#">Produits</a>
-        <a href="#">Ventes</a>
+        <a href="index.html">Accueil</a>
+        <a href="clients.html">Clients</a>
+        <a href="produits.html">Produits</a>
+        <a href="ventes.html">Ventes</a>
         <a href="dashboard.html">Dashboard</a>
       </nav>
+
+      <!-- Utilisateur connecté -->
+      <div class="user-menu">
+        <div class="user-info">
+          <strong id="nomUtilisateur">Chargement...</strong>
+          <span id="roleUtilisateur"></span>
+        </div>
+
+        <button type="button" id="boutonDeconnexion">Déconnexion</button>
+      </div>
     </header>
 
     <!-- Contenu principal -->
@@ -68,9 +78,10 @@
 
     <!-- Pied de page -->
     <footer>
-      <p>© 2026 MySales - Application de gestion des ventes</p>
+      <p>©️ 2026 MySales - Application de gestion des ventes</p>
     </footer>
 
     <script src="script.js"></script>
+    <script src="auth.js"></script>
   </body>
 </html>

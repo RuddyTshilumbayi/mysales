@@ -309,3 +309,106 @@ form {
     grid-template-columns: 1fr;
   }
 }
+/* ======================================================
+   PAGE DE CONNEXION
+   ====================================================== */
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 35px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.12);
+}
+
+.login-card h1 {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.login-card h2 {
+  text-align: center;
+  margin: 25px 0;
+}
+
+.login-subtitle {
+  text-align: center;
+  margin-top: 0;
+  color: #666;
+}
+
+.login-card .form-group {
+  margin-bottom: 18px;
+}
+
+.login-card label {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: bold;
+}
+
+.login-card input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#messageConnexion {
+  text-align: center;
+  margin-top: 15px;
+  min-height: 20px;
+}
+/* ======================================================
+   UTILISATEUR CONNECTÉ
+   ====================================================== */
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-info strong {
+  font-size: 14px;
+}
+
+.user-info span {
+  font-size: 12px;
+  color: #666;
+}
+
+#boutonDeconnexion {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}

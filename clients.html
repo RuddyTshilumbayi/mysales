@@ -11,20 +11,30 @@
   </head>
 
   <body>
-    <header>
-      <h1>MYSALES</h1>
+    <header class="header">
+      <div class="logo">MYSALES</div>
 
       <nav>
-        <a href="index.html"> Accueil </a>
+        <a href="index.html">Accueil</a>
 
-        <a href="clients.html"> Clients </a>
+        <a href="clients.html">Clients</a>
 
-        <a href="produits.html"> Produits </a>
+        <a href="produits.html">Produits</a>
 
-        <a href="ventes.html"> Ventes </a>
+        <a href="ventes.html">Ventes</a>
 
-        <a href="dashboard.html"> Dashboard </a>
+        <a href="dashboard.html">Dashboard</a>
       </nav>
+
+      <!-- Utilisateur connecté -->
+      <div class="user-menu">
+        <div class="user-info">
+          <strong id="nomUtilisateur">Chargement...</strong>
+          <span id="roleUtilisateur"></span>
+        </div>
+
+        <button type="button" id="boutonDeconnexion">Déconnexion</button>
+      </div>
     </header>
 
     <main>
@@ -43,25 +53,25 @@
 
         <form id="clientForm">
           <div>
-            <label for="nomComplet"> Nom complet </label>
+            <label for="nomComplet">Nom complet</label>
 
             <input type="text" id="nomComplet" required />
           </div>
 
           <div>
-            <label for="telephone"> Téléphone </label>
+            <label for="telephone">Téléphone</label>
 
             <input type="text" id="telephone" required />
           </div>
 
           <div>
-            <label for="email"> Email </label>
+            <label for="email">Email</label>
 
             <input type="email" id="email" />
           </div>
 
           <div>
-            <label for="ville"> Ville </label>
+            <label for="ville">Ville</label>
 
             <input type="text" id="ville" />
           </div>
@@ -118,5 +128,6 @@
     </main>
 
     <script src="script.js"></script>
+    <script src="auth.js"></script>
   </body>
 </html>

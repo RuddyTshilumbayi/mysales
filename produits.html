@@ -2,6 +2,7 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>MYSALES - Produits</title>
@@ -10,16 +11,31 @@
   </head>
 
   <body>
-    <header>
-      <h1>MYSALES</h1>
+    <header class="header">
+      <div class="logo">MYSALES</div>
 
       <nav>
         <a href="index.html">Accueil</a>
+
         <a href="clients.html">Clients</a>
+
         <a href="produits.html">Produits</a>
+
         <a href="ventes.html">Ventes</a>
+
         <a href="dashboard.html">Dashboard</a>
       </nav>
+
+      <!-- Utilisateur connecté -->
+      <div class="user-menu">
+        <div class="user-info">
+          <strong id="nomUtilisateur">Chargement...</strong>
+
+          <span id="roleUtilisateur"></span>
+        </div>
+
+        <button type="button" id="boutonDeconnexion">Déconnexion</button>
+      </div>
     </header>
 
     <main>
@@ -42,7 +58,7 @@
 
         <form id="produitForm">
           <div>
-            <label for="nomProduit"> Nom du produit </label>
+            <label for="nomProduit">Nom du produit</label>
 
             <input
               type="text"
@@ -53,7 +69,7 @@
           </div>
 
           <div>
-            <label for="descriptionProduit"> Description </label>
+            <label for="descriptionProduit">Description</label>
 
             <input
               type="text"
@@ -63,7 +79,7 @@
           </div>
 
           <div>
-            <label for="prixProduit"> Prix </label>
+            <label for="prixProduit">Prix</label>
 
             <input
               type="number"
@@ -76,7 +92,7 @@
           </div>
 
           <div>
-            <label for="stockProduit"> Stock </label>
+            <label for="stockProduit">Stock</label>
 
             <input
               type="number"
@@ -146,5 +162,7 @@
     </main>
 
     <script src="produits.js"></script>
+
+    <script src="auth.js"></script>
   </body>
 </html>
