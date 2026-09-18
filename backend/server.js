@@ -2,11 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const session = require("express-session");
+const pgSession = require("connect-pg-simple")(session);
 const bcrypt = require("bcryptjs");
 const pool = require("./db");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // ======================================================
 // CONFIGURATION
@@ -27,14 +28,21 @@ app.use(
 
 app.use(express.json());
 
+app.set("trust proxy", 1);
+
 app.use(
   session({
+    store: new pgSession({
+      pool: pool,
+      tableName: "user_sessions",
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 8,
     },

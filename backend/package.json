@@ -2,9 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -12,9 +13,9 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "epress": "^0.0.1-security",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "pg": "^8.23.0"
