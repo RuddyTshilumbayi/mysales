@@ -11,7 +11,10 @@
   </head>
 
   <body>
-    <!-- En-tête -->
+    <!-- =====================================================
+         EN-TÊTE
+         ===================================================== -->
+
     <header class="header">
       <div class="logo">MySales</div>
 
@@ -24,9 +27,11 @@
       </nav>
 
       <!-- Utilisateur connecté -->
+
       <div class="user-menu">
         <div class="user-info">
-          <strong id="nomUtilisateur">Chargement...</strong>
+          <strong id="nomUtilisateur"> Chargement... </strong>
+
           <span id="roleUtilisateur"></span>
         </div>
 
@@ -34,8 +39,13 @@
       </div>
     </header>
 
-    <!-- Contenu principal -->
+    <!-- =====================================================
+         CONTENU PRINCIPAL
+         ===================================================== -->
+
     <main>
+      <!-- Présentation -->
+
       <section class="hero">
         <div>
           <h1>
@@ -48,40 +58,63 @@
             depuis une seule application.
           </p>
 
-          <button onclick="commencer()">Commencer</button>
+          <button type="button" onclick="commencer()">Commencer</button>
         </div>
       </section>
 
-      <!-- Statistiques -->
+      <!-- =================================================
+             STATISTIQUES
+             ================================================= -->
+
       <section class="stats">
+        <!-- Clients -->
+
         <div class="card">
-          <h2>0</h2>
+          <h2 id="nombreClients">...</h2>
+
           <p>Clients</p>
         </div>
 
+        <!-- Produits -->
+
         <div class="card">
-          <h2>0</h2>
+          <h2 id="nombreProduits">...</h2>
+
           <p>Produits</p>
         </div>
 
+        <!-- Chiffre d'affaires -->
+
         <div class="card">
-          <h2>0 FC</h2>
+          <h2 id="chiffreAffaires">...</h2>
+
           <p>Chiffre d'affaires</p>
         </div>
 
+        <!-- Ventes -->
+
         <div class="card">
-          <h2>0</h2>
+          <h2 id="nombreVentes">...</h2>
+
           <p>Ventes</p>
         </div>
       </section>
     </main>
 
-    <!-- Pied de page -->
+    <!-- =====================================================
+         PIED DE PAGE
+         ===================================================== -->
+
     <footer>
-      <p>©️ 2026 MySales - Application de gestion des ventes</p>
+      <p>© 2026 MySales - Application de gestion des ventes</p>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
+
+    <script src="index.js"></script>
+
     <script src="auth.js"></script>
   </body>
 </html>

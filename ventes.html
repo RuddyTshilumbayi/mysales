@@ -11,22 +11,23 @@
   </head>
 
   <body>
+    <!-- ==================================================
+         EN-TÊTE
+    ================================================== -->
+
     <header class="header">
       <div class="logo">MYSALES</div>
 
       <nav>
         <a href="index.html">Accueil</a>
-
         <a href="clients.html">Clients</a>
-
         <a href="produits.html">Produits</a>
-
         <a href="ventes.html">Ventes</a>
-
         <a href="dashboard.html">Dashboard</a>
       </nav>
 
       <!-- Utilisateur connecté -->
+
       <div class="user-menu">
         <div class="user-info">
           <strong id="nomUtilisateur">Chargement...</strong>
@@ -38,35 +39,87 @@
       </div>
     </header>
 
+    <!-- ==================================================
+         CONTENU PRINCIPAL
+    ================================================== -->
+
     <main>
+      <!-- En-tête de page -->
+
       <section class="page-header">
         <h2>Gestion des ventes</h2>
 
-        <p>Enregistrez les ventes de vos clients.</p>
+        <p>
+          Créez une commande, ajoutez plusieurs produits et enregistrez la vente
+          en une seule opération.
+        </p>
       </section>
 
+      <!-- ==================================================
+           CRÉATION D'UNE COMMANDE
+      ================================================== -->
+
       <section class="form-section">
-        <h3>Enregistrer une vente</h3>
+        <h3>Nouvelle commande</h3>
 
         <form id="venteForm">
-          <div>
-            <label for="clientVente">Client</label>
+          <!-- CLIENT -->
+
+          <div class="form-group">
+            <label for="clientVente"> Client </label>
 
             <select id="clientVente" required>
               <option value="">Sélectionnez un client</option>
             </select>
           </div>
 
-          <div>
-            <label for="produitVente">Produit</label>
+          <!-- RECHERCHE PRODUIT -->
 
-            <select id="produitVente" required>
+          <div class="form-group">
+            <label for="rechercheProduit"> Rechercher un produit </label>
+
+            <input
+              type="text"
+              id="rechercheProduit"
+              placeholder="Tapez le nom du produit..."
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- PRODUIT -->
+
+          <div class="form-group">
+            <label for="produitVente"> Produit </label>
+
+            <select id="produitVente">
               <option value="">Sélectionnez un produit</option>
             </select>
           </div>
 
-          <div>
-            <label for="quantiteVente">Quantité</label>
+          <!-- INFORMATIONS PRODUIT -->
+
+          <div
+            id="informationProduit"
+            class="product-info"
+            style="display: none"
+          >
+            <div>
+              <strong>Prix :</strong>
+
+              <span id="prixProduit"> 0.00 $ </span>
+            </div>
+
+            <div>
+              <strong>Stock disponible :</strong>
+
+              <span id="stockProduit"> 0 </span>
+            </div>
+          </div>
+
+          <!-- QUANTITÉ -->
+
+          <div class="form-group">
+            <label for="quantiteVente"> Quantité </label>
 
             <input
               type="number"
@@ -74,50 +127,159 @@
               min="1"
               step="1"
               value="1"
-              required
             />
           </div>
 
-          <div>
-            <label for="totalVente">Total</label>
+          <!-- SOUS-TOTAL -->
 
-            <input type="text" id="totalVente" value="0.00 $" readonly />
+          <div class="form-group">
+            <label for="sousTotalVente"> Sous-total du produit </label>
+
+            <input type="text" id="sousTotalVente" value="0.00 $" readonly />
           </div>
 
-          <button type="submit">Enregistrer la vente</button>
+          <!-- AJOUT AU PANIER -->
+
+          <button type="button" id="boutonAjouterPanier">
+            + Ajouter au panier
+          </button>
+
+          <!-- ==================================================
+               PANIER
+          ================================================== -->
+
+          <div class="cart-section">
+            <h3>Panier de la commande</h3>
+
+            <div class="cart-table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+
+                    <th>Prix unitaire</th>
+
+                    <th>Quantité</th>
+
+                    <th>Sous-total</th>
+
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody id="panierList">
+                  <tr>
+                    <td colspan="5">Aucun produit dans le panier.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TOTAL COMMANDE -->
+
+            <div class="cart-total">
+              <span> Total de la commande </span>
+
+              <strong id="totalVente"> 0.00 $ </strong>
+            </div>
+          </div>
+
+          <!-- ENREGISTRER -->
+
+          <button type="submit">Enregistrer la commande</button>
         </form>
       </section>
 
+      <!-- ==================================================
+           STATISTIQUES
+      ================================================== -->
+
+      <section class="form-section">
+        <h3>Résumé des ventes</h3>
+
+        <div class="stats">
+          <div class="card">
+            <h4>Nombre de ventes</h4>
+
+            <p id="nombreVentes">0</p>
+          </div>
+
+          <div class="card">
+            <h4>Chiffre d'affaires</h4>
+
+            <p id="chiffreAffaires">0.00 $</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================
+           HISTORIQUE DES VENTES
+      ================================================== -->
+
       <section class="table-section">
-        <h3>Liste des ventes</h3>
+        <div
+          class="section-header"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+          "
+        >
+          <h3>Historique des ventes</h3>
 
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
+          <button type="button" id="boutonActualiser">Actualiser</button>
+        </div>
 
-              <th>Client</th>
+        <!-- RECHERCHE HISTORIQUE -->
 
-              <th>Produit</th>
+        <div class="form-group">
+          <label for="rechercheVente"> Rechercher une vente </label>
 
-              <th>Quantité</th>
+          <input
+            type="text"
+            id="rechercheVente"
+            placeholder="Rechercher par ID, client, produit ou vendeur..."
+          />
+        </div>
 
-              <th>Prix unitaire</th>
+        <!-- TABLEAU HISTORIQUE -->
 
-              <th>Total</th>
+        <div style="overflow-x: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
 
-              <th>Date</th>
-            </tr>
-          </thead>
+                <th>Client</th>
 
-          <tbody id="ventesList">
-            <tr>
-              <td colspan="7">Chargement des ventes...</td>
-            </tr>
-          </tbody>
-        </table>
+                <th>Produits</th>
+
+                <th>Total</th>
+
+                <th>Vendeur</th>
+
+                <th>Date</th>
+
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="ventesList">
+              <tr>
+                <td colspan="7">Chargement des ventes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
+
+    <!-- ==================================================
+         JAVASCRIPT
+    ================================================== -->
 
     <script src="ventes.js"></script>
 

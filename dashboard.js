@@ -1,6 +1,10 @@
-const CLIENTS_API = "http://localhost:3000/api/clients";
-const PRODUITS_API = "http://localhost:3000/api/produits";
-const VENTES_API = "http://localhost:3000/api/ventes";
+const CLIENTS_API = "/api/clients";
+const PRODUITS_API = "/api/produits";
+const VENTES_API = "/api/ventes";
+
+// ======================================================
+// ÉLÉMENTS HTML
+// ======================================================
 
 const chiffreAffaires = document.getElementById("chiffreAffaires");
 const nombreVentes = document.getElementById("nombreVentes");
@@ -10,6 +14,17 @@ const nombreClients = document.getElementById("nombreClients");
 const dashboardVentes = document.getElementById("dashboardVentes");
 const dashboardStocks = document.getElementById("dashboardStocks");
 
+const stockTotal = document.getElementById("stockTotal");
+const stockFaible = document.getElementById("stockFaible");
+
+const boutonActualiserDashboard = document.getElementById(
+  "boutonActualiserDashboard",
+);
+
+// ======================================================
+// VARIABLES
+// ======================================================
+
 let ventes = [];
 let produits = [];
 let clients = [];
@@ -17,55 +32,107 @@ let clients = [];
 let caChart = null;
 let produitsChart = null;
 let clientsChart = null;
+let vendeursChart = null;
 
 // ======================================================
-// CLIENTS
+// OUTIL DE SÉCURITÉ
 // ======================================================
 
-async function chargerClients() {
+function echapperHTML(valeur) {
+  return String(valeur ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ======================================================
+// OBTENIR LES PRODUITS D'UNE VENTE
+// ======================================================
+
+function obtenirProduitsVente(vente) {
+  if (Array.isArray(vente.produits)) {
+    return vente.produits;
+  }
+
+  return [];
+}
+
+// ======================================================
+// CHARGER TOUTES LES DONNÉES
+// ======================================================
+
+async function chargerDonneesDashboard() {
   try {
-    const response = await fetch(CLIENTS_API);
+    const [clientsResponse, produitsResponse, ventesResponse] =
+      await Promise.all([
+        fetch(CLIENTS_API, {
+          credentials: "include",
+        }),
 
-    if (!response.ok) {
-      throw new Error("Impossible de récupérer les clients.");
+        fetch(PRODUITS_API, {
+          credentials: "include",
+        }),
+
+        fetch(VENTES_API, {
+          credentials: "include",
+        }),
+      ]);
+
+    if (!clientsResponse.ok || !produitsResponse.ok || !ventesResponse.ok) {
+      throw new Error("Impossible de récupérer les données du dashboard.");
     }
 
-    clients = await response.json();
+    clients = await clientsResponse.json();
+    produits = await produitsResponse.json();
+    ventes = await ventesResponse.json();
 
-    nombreClients.textContent = clients.length;
+    calculerKPI();
+
+    afficherStocks();
+
+    afficherVentes();
+
+    creerGraphiqueCA();
+
+    creerGraphiqueProduits();
+
+    creerGraphiqueClients();
+
+    creerGraphiqueVendeurs();
   } catch (error) {
-    console.error("Erreur clients :", error);
+    console.error("Erreur chargement dashboard :", error);
 
-    nombreClients.textContent = "Erreur";
+    afficherErreurDashboard();
   }
 }
 
 // ======================================================
-// PRODUITS
+// KPI
 // ======================================================
 
-async function chargerProduits() {
-  try {
-    const response = await fetch(PRODUITS_API);
+function calculerKPI() {
+  let chiffreTotal = 0;
+  let quantiteTotale = 0;
 
-    if (!response.ok) {
-      throw new Error("Impossible de récupérer les produits.");
-    }
+  ventes.forEach((vente) => {
+    chiffreTotal += Number(vente.total || 0);
 
-    produits = await response.json();
+    const produitsCommande = obtenirProduitsVente(vente);
 
-    afficherStocks();
-  } catch (error) {
-    console.error("Erreur produits :", error);
+    produitsCommande.forEach((produit) => {
+      quantiteTotale += Number(produit.quantite || 0);
+    });
+  });
 
-    dashboardStocks.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    Impossible de charger les stocks.
-                </td>
-            </tr>
-        `;
-  }
+  chiffreAffaires.textContent = `${chiffreTotal.toFixed(2)} $`;
+
+  nombreVentes.textContent = ventes.length;
+
+  produitsVendus.textContent = quantiteTotale;
+
+  nombreClients.textContent = clients.length;
 }
 
 // ======================================================
@@ -77,101 +144,79 @@ function afficherStocks() {
 
   if (produits.length === 0) {
     dashboardStocks.innerHTML = `
-            <tr>
-                <td colspan="3">
-                    Aucun produit enregistré.
-                </td>
-            </tr>
-        `;
+      <tr>
+        <td colspan="4">
+          Aucun produit enregistré.
+        </td>
+      </tr>
+    `;
+
+    stockTotal.textContent = "0";
+    stockFaible.textContent = "0";
 
     return;
   }
 
-  produits.forEach((produit) => {
+  let totalStock = 0;
+  let nombreStockFaible = 0;
+
+  const produitsTries = [...produits].sort(
+    (a, b) => Number(a.stock) - Number(b.stock),
+  );
+
+  produitsTries.forEach((produit) => {
+    const stock = Number(produit.stock || 0);
+
+    totalStock += stock;
+
+    if (stock <= 5) {
+      nombreStockFaible++;
+    }
+
+    let classeEtat = "stock-normal";
+    let texteEtat = "Stock normal";
+
+    if (stock === 0) {
+      classeEtat = "stock-rupture";
+      texteEtat = "Rupture";
+    } else if (stock <= 5) {
+      classeEtat = "stock-faible";
+      texteEtat = "Stock faible";
+    }
+
     const ligne = document.createElement("tr");
 
     ligne.innerHTML = `
-            <td>${produit.nom}</td>
+      <td>
+        <strong>
+          ${echapperHTML(produit.nom)}
+        </strong>
+      </td>
 
-            <td>
-                ${Number(produit.prix).toFixed(2)} $
-            </td>
+      <td>
+        ${Number(produit.prix || 0).toFixed(2)} $
+      </td>
 
-            <td>
-                ${produit.stock}
-            </td>
-        `;
+      <td>
+        <strong>${stock}</strong>
+      </td>
+
+      <td>
+        <span class="stock-badge ${classeEtat}">
+          ${texteEtat}
+        </span>
+      </td>
+    `;
 
     dashboardStocks.appendChild(ligne);
   });
+
+  stockTotal.textContent = totalStock;
+  stockFaible.textContent = nombreStockFaible;
 }
 
 // ======================================================
-// VENTES
-// ======================================================
-
-async function chargerVentes() {
-  try {
-    const response = await fetch(VENTES_API);
-
-    if (!response.ok) {
-      throw new Error("Impossible de récupérer les ventes.");
-    }
-
-    ventes = await response.json();
-
-    calculerKPI();
-
-    afficherVentes();
-
-    // IMPORTANT :
-    // Les graphiques sont créés APRÈS le chargement des ventes.
-
-    creerGraphiqueCA();
-
-    creerGraphiqueProduits();
-
-    creerGraphiqueClients();
-  } catch (error) {
-    console.error("Erreur ventes :", error);
-
-    chiffreAffaires.textContent = "Erreur";
-    nombreVentes.textContent = "Erreur";
-    produitsVendus.textContent = "Erreur";
-
-    dashboardVentes.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    Impossible de charger les ventes.
-                </td>
-            </tr>
-        `;
-  }
-}
-
-// ======================================================
-// CALCUL DES KPI
-// ======================================================
-
-function calculerKPI() {
-  let chiffreTotal = 0;
-  let quantiteTotale = 0;
-
-  ventes.forEach((vente) => {
-    chiffreTotal += Number(vente.total);
-
-    quantiteTotale += Number(vente.quantite);
-  });
-
-  chiffreAffaires.textContent = `${chiffreTotal.toFixed(2)} $`;
-
-  nombreVentes.textContent = ventes.length;
-
-  produitsVendus.textContent = quantiteTotale;
-}
-
-// ======================================================
-// TABLEAU DES VENTES
+// DERNIÈRES VENTES
 // ======================================================
 
 function afficherVentes() {
@@ -179,36 +224,70 @@ function afficherVentes() {
 
   if (ventes.length === 0) {
     dashboardVentes.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    Aucune vente enregistrée.
-                </td>
-            </tr>
-        `;
+      <tr>
+        <td colspan="7">
+          Aucune vente enregistrée.
+        </td>
+      </tr>
+    `;
 
     return;
   }
 
-  ventes.forEach((vente) => {
+  const ventesRecentes = [...ventes]
+    .sort((a, b) => new Date(b.date_vente) - new Date(a.date_vente))
+    .slice(0, 10);
+
+  ventesRecentes.forEach((vente) => {
     const ligne = document.createElement("tr");
 
+    const produitsCommande = obtenirProduitsVente(vente);
+
+    const nomsProduits = produitsCommande
+      .map(
+        (produit) =>
+          `${echapperHTML(produit.produit)} x${Number(produit.quantite || 0)}`,
+      )
+      .join(", ");
+
+    const quantiteTotale = produitsCommande.reduce(
+      (total, produit) => total + Number(produit.quantite || 0),
+      0,
+    );
+
+    const date = new Date(vente.date_vente).toLocaleString("fr-FR");
+
     ligne.innerHTML = `
-            <td>${vente.id}</td>
+      <td>
+        <strong>#${echapperHTML(vente.id)}</strong>
+      </td>
 
-            <td>${vente.client}</td>
+      <td>
+        ${echapperHTML(vente.client || "Client inconnu")}
+      </td>
 
-            <td>${vente.produit}</td>
+      <td>
+        ${nomsProduits || "Aucun produit"}
+      </td>
 
-            <td>${vente.quantite}</td>
+      <td>
+        ${quantiteTotale}
+      </td>
 
-            <td>
-                ${Number(vente.total).toFixed(2)} $
-            </td>
+      <td>
+        <strong>
+          ${Number(vente.total || 0).toFixed(2)} $
+        </strong>
+      </td>
 
-            <td>
-                ${new Date(vente.date_vente).toLocaleString("fr-FR")}
-            </td>
-        `;
+      <td>
+        ${echapperHTML(vente.vendeur || "Inconnu")}
+      </td>
+
+      <td>
+        ${echapperHTML(date)}
+      </td>
+    `;
 
     dashboardVentes.appendChild(ligne);
   });
@@ -222,22 +301,38 @@ function creerGraphiqueCA() {
   const ventesParDate = {};
 
   ventes.forEach((vente) => {
-    const date = new Date(vente.date_vente).toLocaleDateString("fr-FR");
+    const dateObjet = new Date(vente.date_vente);
 
-    if (!ventesParDate[date]) {
-      ventesParDate[date] = 0;
+    const annee = dateObjet.getFullYear();
+
+    const mois = String(dateObjet.getMonth() + 1).padStart(2, "0");
+
+    const jour = String(dateObjet.getDate()).padStart(2, "0");
+
+    const cle = `${annee}-${mois}-${jour}`;
+
+    if (!ventesParDate[cle]) {
+      ventesParDate[cle] = 0;
     }
 
-    ventesParDate[date] += Number(vente.total);
+    ventesParDate[cle] += Number(vente.total || 0);
   });
 
-  const labels = Object.keys(ventesParDate);
+  const datesTriees = Object.keys(ventesParDate).sort();
 
-  const valeurs = Object.values(ventesParDate);
+  const labels = datesTriees.map((date) => {
+    const morceaux = date.split("-");
+
+    return `${morceaux[2]}/${morceaux[1]}`;
+  });
+
+  const valeurs = datesTriees.map((date) => ventesParDate[date]);
 
   const canvas = document.getElementById("caChart");
 
-  if (!canvas) return;
+  if (!canvas) {
+    return;
+  }
 
   const contexte = canvas.getContext("2d");
 
@@ -249,7 +344,7 @@ function creerGraphiqueCA() {
     type: "line",
 
     data: {
-      labels: labels,
+      labels,
 
       datasets: [
         {
@@ -257,39 +352,89 @@ function creerGraphiqueCA() {
 
           data: valeurs,
 
-          tension: 0.3,
+          tension: 0.35,
+
+          fill: true,
+
+          borderWidth: 3,
+
+          pointRadius: 4,
+
+          pointHoverRadius: 6,
         },
       ],
     },
 
     options: {
       responsive: true,
+
+      maintainAspectRatio: false,
+
+      interaction: {
+        intersect: false,
+
+        mode: "index",
+      },
+
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+
+      scales: {
+        y: {
+          beginAtZero: true,
+
+          ticks: {
+            callback: function (value) {
+              return `${value} $`;
+            },
+          },
+        },
+      },
     },
   });
 }
 
 // ======================================================
-// GRAPHIQUE PRODUITS LES PLUS VENDUS
+// GRAPHIQUE PRODUITS
 // ======================================================
 
 function creerGraphiqueProduits() {
   const quantites = {};
 
   ventes.forEach((vente) => {
-    if (!quantites[vente.produit]) {
-      quantites[vente.produit] = 0;
-    }
+    const produitsCommande = obtenirProduitsVente(vente);
 
-    quantites[vente.produit] += Number(vente.quantite);
+    produitsCommande.forEach((produit) => {
+      const nomProduit = produit.produit;
+
+      if (!nomProduit) {
+        return;
+      }
+
+      if (!quantites[nomProduit]) {
+        quantites[nomProduit] = 0;
+      }
+
+      quantites[nomProduit] += Number(produit.quantite || 0);
+    });
   });
 
-  const labels = Object.keys(quantites);
+  const produitsTries = Object.entries(quantites)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
 
-  const valeurs = Object.values(quantites);
+  const labels = produitsTries.map((item) => item[0]);
+
+  const valeurs = produitsTries.map((item) => item[1]);
 
   const canvas = document.getElementById("produitsChart");
 
-  if (!canvas) return;
+  if (!canvas) {
+    return;
+  }
 
   const contexte = canvas.getContext("2d");
 
@@ -301,13 +446,17 @@ function creerGraphiqueProduits() {
     type: "bar",
 
     data: {
-      labels: labels,
+      labels,
 
       datasets: [
         {
           label: "Quantité vendue",
 
           data: valeurs,
+
+          borderRadius: 6,
+
+          borderWidth: 1,
         },
       ],
     },
@@ -315,9 +464,21 @@ function creerGraphiqueProduits() {
     options: {
       responsive: true,
 
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+
       scales: {
         y: {
           beginAtZero: true,
+
+          ticks: {
+            precision: 0,
+          },
         },
       },
     },
@@ -325,27 +486,45 @@ function creerGraphiqueProduits() {
 }
 
 // ======================================================
-// GRAPHIQUE VENTES PAR CLIENT
+// GRAPHIQUE CLIENTS
 // ======================================================
 
 function creerGraphiqueClients() {
   const ventesParClient = {};
 
   ventes.forEach((vente) => {
-    if (!ventesParClient[vente.client]) {
-      ventesParClient[vente.client] = 0;
+    const client = vente.client || "Client inconnu";
+
+    if (!ventesParClient[client]) {
+      ventesParClient[client] = 0;
     }
 
-    ventesParClient[vente.client] += Number(vente.total);
+    ventesParClient[client] += Number(vente.total || 0);
   });
 
-  const labels = Object.keys(ventesParClient);
+  const clientsTries = Object.entries(ventesParClient).sort(
+    (a, b) => b[1] - a[1],
+  );
 
-  const valeurs = Object.values(ventesParClient);
+  const topClients = clientsTries.slice(0, 7);
+
+  const autres = clientsTries
+    .slice(7)
+    .reduce((total, item) => total + Number(item[1] || 0), 0);
+
+  if (autres > 0) {
+    topClients.push(["Autres", autres]);
+  }
+
+  const labels = topClients.map((item) => item[0]);
+
+  const valeurs = topClients.map((item) => item[1]);
 
   const canvas = document.getElementById("clientsChart");
 
-  if (!canvas) return;
+  if (!canvas) {
+    return;
+  }
 
   const contexte = canvas.getContext("2d");
 
@@ -357,20 +536,164 @@ function creerGraphiqueClients() {
     type: "doughnut",
 
     data: {
-      labels: labels,
+      labels,
 
       datasets: [
         {
-          label: "Ventes par client",
+          label: "Chiffre d'affaires",
 
           data: valeurs,
+
+          borderWidth: 2,
         },
       ],
     },
 
     options: {
       responsive: true,
+
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          position: "right",
+        },
+      },
     },
+  });
+}
+
+// ======================================================
+// GRAPHIQUE VENDEURS
+// ======================================================
+
+function creerGraphiqueVendeurs() {
+  const ventesParVendeur = {};
+
+  ventes.forEach((vente) => {
+    const vendeur = vente.vendeur || "Vendeur inconnu";
+
+    if (!ventesParVendeur[vendeur]) {
+      ventesParVendeur[vendeur] = 0;
+    }
+
+    ventesParVendeur[vendeur] += Number(vente.total || 0);
+  });
+
+  const vendeursTries = Object.entries(ventesParVendeur).sort(
+    (a, b) => b[1] - a[1],
+  );
+
+  const labels = vendeursTries.map((item) => item[0]);
+
+  const valeurs = vendeursTries.map((item) => item[1]);
+
+  const canvas = document.getElementById("vendeursChart");
+
+  if (!canvas) {
+    return;
+  }
+
+  const contexte = canvas.getContext("2d");
+
+  if (vendeursChart) {
+    vendeursChart.destroy();
+  }
+
+  vendeursChart = new Chart(contexte, {
+    type: "bar",
+
+    data: {
+      labels,
+
+      datasets: [
+        {
+          label: "Chiffre d'affaires ($)",
+
+          data: valeurs,
+
+          borderRadius: 6,
+
+          borderWidth: 1,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+
+      scales: {
+        y: {
+          beginAtZero: true,
+
+          ticks: {
+            callback: function (value) {
+              return `${value} $`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+// ======================================================
+// ERREUR DASHBOARD
+// ======================================================
+
+function afficherErreurDashboard() {
+  chiffreAffaires.textContent = "Erreur";
+
+  nombreVentes.textContent = "Erreur";
+
+  produitsVendus.textContent = "Erreur";
+
+  nombreClients.textContent = "Erreur";
+
+  dashboardVentes.innerHTML = `
+    <tr>
+      <td colspan="7">
+        Impossible de charger les ventes.
+      </td>
+    </tr>
+  `;
+
+  dashboardStocks.innerHTML = `
+    <tr>
+      <td colspan="4">
+        Impossible de charger les stocks.
+      </td>
+    </tr>
+  `;
+
+  stockTotal.textContent = "Erreur";
+
+  stockFaible.textContent = "Erreur";
+}
+
+// ======================================================
+// BOUTON ACTUALISER
+// ======================================================
+
+if (boutonActualiserDashboard) {
+  boutonActualiserDashboard.addEventListener("click", async function () {
+    boutonActualiserDashboard.disabled = true;
+
+    boutonActualiserDashboard.textContent = "↻ Actualisation...";
+
+    await chargerDonneesDashboard();
+
+    boutonActualiserDashboard.disabled = false;
+
+    boutonActualiserDashboard.textContent = "↻ Actualiser";
   });
 }
 
@@ -378,12 +701,4 @@ function creerGraphiqueClients() {
 // INITIALISATION
 // ======================================================
 
-async function initialiserDashboard() {
-  await chargerClients();
-
-  await chargerProduits();
-
-  await chargerVentes();
-}
-
-initialiserDashboard();
+chargerDonneesDashboard();

@@ -19,21 +19,15 @@
 
       <nav>
         <a href="index.html">Accueil</a>
-
         <a href="clients.html">Clients</a>
-
         <a href="produits.html">Produits</a>
-
         <a href="ventes.html">Ventes</a>
-
         <a href="dashboard.html">Dashboard</a>
       </nav>
 
-      <!-- Utilisateur connecté -->
       <div class="user-menu">
         <div class="user-info">
           <strong id="nomUtilisateur">Chargement...</strong>
-
           <span id="roleUtilisateur"></span>
         </div>
 
@@ -41,37 +35,64 @@
       </div>
     </header>
 
-    <main>
-      <section class="page-header">
-        <h2>Dashboard commercial</h2>
+    <main id="dashboard">
+      <!-- =========================
+           EN-TÊTE
+      ========================== -->
 
-        <p>Analyse de l'activité de MYSALES.</p>
+      <section class="page-header dashboard-intro">
+        <div>
+          <span class="dashboard-badge">TABLEAU DE BORD</span>
+
+          <h2>Dashboard commercial</h2>
+
+          <p>
+            Suivez les performances commerciales, les ventes, les produits et
+            les stocks de MYSALES.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="boutonActualiserDashboard"
+          class="dashboard-refresh"
+        >
+          ↻ Actualiser
+        </button>
       </section>
 
       <!-- =========================
-             KPI
-        ========================== -->
+           KPI
+      ========================== -->
 
       <section class="dashboard-cards">
-        <div class="dashboard-card">
-          <h3>Chiffre d'affaires</h3>
+        <div class="dashboard-card dashboard-card-primary">
+          <span class="dashboard-card-label">CHIFFRE D'AFFAIRES</span>
+
+          <h3>CA total</h3>
 
           <p id="chiffreAffaires">Chargement...</p>
         </div>
 
         <div class="dashboard-card">
+          <span class="dashboard-card-label">ACTIVITÉ</span>
+
           <h3>Nombre de ventes</h3>
 
           <p id="nombreVentes">Chargement...</p>
         </div>
 
         <div class="dashboard-card">
+          <span class="dashboard-card-label">PRODUITS</span>
+
           <h3>Produits vendus</h3>
 
           <p id="produitsVendus">Chargement...</p>
         </div>
 
         <div class="dashboard-card">
+          <span class="dashboard-card-label">CLIENTS</span>
+
           <h3>Clients</h3>
 
           <p id="nombreClients">Chargement...</p>
@@ -79,90 +100,153 @@
       </section>
 
       <!-- =========================
-             GRAPHIQUES
-        ========================== -->
+           GRAPHIQUES
+      ========================== -->
+
+      <section class="dashboard-section-title">
+        <span>ANALYSE COMMERCIALE</span>
+        <h2>Performance des ventes</h2>
+      </section>
 
       <section class="dashboard-charts">
         <div class="chart-container">
-          <h3>Évolution du chiffre d'affaires</h3>
+          <div class="chart-header">
+            <div>
+              <span>ÉVOLUTION</span>
+              <h3>Chiffre d'affaires</h3>
+            </div>
+          </div>
 
-          <canvas id="caChart"></canvas>
+          <div class="chart-wrapper">
+            <canvas id="caChart"></canvas>
+          </div>
         </div>
 
         <div class="chart-container">
-          <h3>Produits les plus vendus</h3>
+          <div class="chart-header">
+            <div>
+              <span>PRODUITS</span>
+              <h3>Produits les plus vendus</h3>
+            </div>
+          </div>
 
-          <canvas id="produitsChart"></canvas>
+          <div class="chart-wrapper">
+            <canvas id="produitsChart"></canvas>
+          </div>
         </div>
 
         <div class="chart-container">
-          <h3>Ventes par client</h3>
+          <div class="chart-header">
+            <div>
+              <span>CLIENTS</span>
+              <h3>Chiffre d'affaires par client</h3>
+            </div>
+          </div>
 
-          <canvas id="clientsChart"></canvas>
+          <div class="chart-wrapper">
+            <canvas id="clientsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <div>
+              <span>ÉQUIPE COMMERCIALE</span>
+              <h3>Ventes par vendeur</h3>
+            </div>
+          </div>
+
+          <div class="chart-wrapper">
+            <canvas id="vendeursChart"></canvas>
+          </div>
         </div>
       </section>
 
       <!-- =========================
-             DERNIÈRES VENTES
-        ========================== -->
+           DERNIÈRES VENTES
+      ========================== -->
 
-      <section class="table-section">
-        <h3>Dernières ventes</h3>
+      <section class="table-section dashboard-table-section">
+        <div class="dashboard-table-header">
+          <div>
+            <span>ACTIVITÉ RÉCENTE</span>
+            <h2>Dernières ventes</h2>
+          </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
+          <a href="ventes.html" class="dashboard-link">
+            Voir toutes les ventes →
+          </a>
+        </div>
 
-              <th>Client</th>
+        <div class="dashboard-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client</th>
+                <th>Produits</th>
+                <th>Quantité</th>
+                <th>Total</th>
+                <th>Vendeur</th>
+                <th>Date</th>
+              </tr>
+            </thead>
 
-              <th>Produit</th>
-
-              <th>Quantité</th>
-
-              <th>Total</th>
-
-              <th>Date</th>
-            </tr>
-          </thead>
-
-          <tbody id="dashboardVentes">
-            <tr>
-              <td colspan="6">Chargement...</td>
-            </tr>
-          </tbody>
-        </table>
+            <tbody id="dashboardVentes">
+              <tr>
+                <td colspan="7">Chargement...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- =========================
-             STOCK
-        ========================== -->
+           STOCK
+      ========================== -->
 
-      <section class="table-section">
-        <h3>État des stocks</h3>
+      <section class="table-section dashboard-table-section">
+        <div class="dashboard-table-header">
+          <div>
+            <span>INVENTAIRE</span>
+            <h2>État des stocks</h2>
+          </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Produit</th>
+          <div class="stock-indicators">
+            <span>
+              Stock total :
+              <strong id="stockTotal">0</strong>
+            </span>
 
-              <th>Prix</th>
+            <span>
+              Stock faible :
+              <strong id="stockFaible">0</strong>
+            </span>
+          </div>
+        </div>
 
-              <th>Stock disponible</th>
-            </tr>
-          </thead>
+        <div class="dashboard-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Prix</th>
+                <th>Stock disponible</th>
+                <th>État</th>
+              </tr>
+            </thead>
 
-          <tbody id="dashboardStocks">
-            <tr>
-              <td colspan="3">Chargement...</td>
-            </tr>
-          </tbody>
-        </table>
+            <tbody id="dashboardStocks">
+              <tr>
+                <td colspan="4">Chargement...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
 
     <script src="dashboard.js"></script>
-
     <script src="auth.js"></script>
   </body>
 </html>

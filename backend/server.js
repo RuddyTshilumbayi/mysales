@@ -386,7 +386,6 @@ app.put("/api/utilisateurs/:id", requireAdmin, async (req, res) => {
 
     let result;
 
-    // Si un nouveau mot de passe est fourni
     if (mot_de_passe && mot_de_passe.trim() !== "") {
       if (mot_de_passe.length < 6) {
         return res.status(400).json({
@@ -440,8 +439,6 @@ app.put("/api/utilisateurs/:id", requireAdmin, async (req, res) => {
       });
     }
 
-    // Si l'admin modifie son propre compte,
-    // mettre à jour sa session.
     if (req.session.user.id === id) {
       req.session.user.nom = result.rows[0].nom;
       req.session.user.email = result.rows[0].email;
@@ -479,7 +476,6 @@ app.delete("/api/utilisateurs/:id", requireAdmin, async (req, res) => {
       });
     }
 
-    // Empêcher l'admin de supprimer son propre compte
     if (req.session.user.id === id) {
       return res.status(400).json({
         message: "Vous ne pouvez pas supprimer votre propre compte.",
@@ -937,6 +933,8 @@ app.delete("/api/produits/:id", requireAuth, async (req, res) => {
 // VENTES
 // ======================================================
 
+// GET - récupérer les ventes
+// Une ligne = une commande complète
 app.get("/api/ventes", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -945,16 +943,44 @@ app.get("/api/ventes", requireAuth, async (req, res) => {
         v.date_vente,
         v.total,
         c.nom_complet AS client,
-        p.nom AS produit,
-        dv.quantite,
-        dv.prix_unitaire
+        u.nom AS vendeur,
+
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'produit_id', p.id,
+              'produit', p.nom,
+              'quantite', dv.quantite,
+              'prix_unitaire', dv.prix_unitaire,
+              'sous_total',
+                dv.quantite * dv.prix_unitaire
+            )
+            ORDER BY dv.id
+          ) FILTER (WHERE dv.id IS NOT NULL),
+          '[]'::json
+        ) AS produits
+
       FROM ventes v
+
       INNER JOIN clients c
         ON c.id = v.client_id
-      INNER JOIN details_vente dv
+
+      INNER JOIN utilisateurs u
+        ON u.id = v.utilisateur_id
+
+      LEFT JOIN details_vente dv
         ON dv.vente_id = v.id
-      INNER JOIN produits p
+
+      LEFT JOIN produits p
         ON p.id = dv.produit_id
+
+      GROUP BY
+        v.id,
+        v.date_vente,
+        v.total,
+        c.nom_complet,
+        u.nom
+
       ORDER BY v.id DESC
     `);
 
@@ -969,35 +995,90 @@ app.get("/api/ventes", requireAuth, async (req, res) => {
   }
 });
 
+// POST - enregistrer une commande multi-produits
 app.post("/api/ventes", requireAuth, async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { client_id, produit_id, quantite } = req.body;
+    const { client_id, produits } = req.body;
 
     const clientId = Number(client_id);
-    const produitId = Number(produit_id);
-    const quantiteNumerique = Number(quantite);
 
-    if (
-      !Number.isInteger(clientId) ||
-      !Number.isInteger(produitId) ||
-      !Number.isInteger(quantiteNumerique) ||
-      quantiteNumerique <= 0
-    ) {
+    // ==================================================
+    // VALIDATION DU CLIENT
+    // ==================================================
+
+    if (!Number.isInteger(clientId)) {
       return res.status(400).json({
-        message: "Client, produit et quantité doivent être valides.",
+        message: "Le client sélectionné est invalide.",
       });
     }
 
+    // ==================================================
+    // VALIDATION DU PANIER
+    // ==================================================
+
+    if (!Array.isArray(produits) || produits.length === 0) {
+      return res.status(400).json({
+        message: "Le panier doit contenir au moins un produit.",
+      });
+    }
+
+    // ==================================================
+    // NORMALISATION DES PRODUITS
+    // ==================================================
+
+    const panierMap = new Map();
+
+    for (const ligne of produits) {
+      const produitId = Number(ligne.produit_id);
+      const quantite = Number(ligne.quantite);
+
+      if (!Number.isInteger(produitId) || produitId <= 0) {
+        return res.status(400).json({
+          message: "Un produit du panier est invalide.",
+        });
+      }
+
+      if (!Number.isInteger(quantite) || quantite <= 0) {
+        return res.status(400).json({
+          message:
+            "La quantité de chaque produit doit être un entier supérieur à 0.",
+        });
+      }
+
+      const quantiteExistante = panierMap.get(produitId) || 0;
+
+      panierMap.set(produitId, quantiteExistante + quantite);
+    }
+
+    const produitsDemandes = Array.from(panierMap.entries()).map(
+      ([produitId, quantite]) => ({
+        produit_id: produitId,
+        quantite: quantite,
+      }),
+    );
+
+    const produitIds = produitsDemandes.map((ligne) => ligne.produit_id);
+
+    // ==================================================
+    // DÉBUT TRANSACTION
+    // ==================================================
+
     await client.query("BEGIN");
+
+    // ==================================================
+    // VÉRIFIER LE CLIENT
+    // ==================================================
 
     const clientResult = await client.query(
       `
-      SELECT id, nom_complet
-      FROM clients
-      WHERE id = $1
-      `,
+        SELECT
+          id,
+          nom_complet
+        FROM clients
+        WHERE id = $1
+        `,
       [clientId],
     );
 
@@ -1005,112 +1086,214 @@ app.post("/api/ventes", requireAuth, async (req, res) => {
       await client.query("ROLLBACK");
 
       return res.status(404).json({
-        message: "Client introuvable",
+        message: "Client introuvable.",
       });
     }
 
-    const produitResult = await client.query(
+    // ==================================================
+    // RÉCUPÉRER ET VERROUILLER LES PRODUITS
+    // ==================================================
+
+    const produitsResult = await client.query(
       `
-      SELECT
-        id,
-        nom,
-        prix,
-        stock
-      FROM produits
-      WHERE id = $1
-      FOR UPDATE
-      `,
-      [produitId],
+        SELECT
+          id,
+          nom,
+          prix,
+          stock
+        FROM produits
+        WHERE id = ANY($1::int[])
+        ORDER BY id
+        FOR UPDATE
+        `,
+      [produitIds],
     );
 
-    if (produitResult.rows.length === 0) {
+    // ==================================================
+    // VÉRIFIER QUE TOUS LES PRODUITS EXISTENT
+    // ==================================================
+
+    if (produitsResult.rows.length !== produitIds.length) {
+      const produitsTrouves = new Set(
+        produitsResult.rows.map((produit) => produit.id),
+      );
+
+      const produitManquant = produitIds.find((id) => !produitsTrouves.has(id));
+
       await client.query("ROLLBACK");
 
       return res.status(404).json({
-        message: "Produit introuvable",
+        message: `Le produit avec l'ID ${produitManquant} est introuvable.`,
       });
     }
 
-    const produit = produitResult.rows[0];
+    // ==================================================
+    // CRÉER UNE MAP DES PRODUITS
+    // ==================================================
 
-    if (produit.stock < quantiteNumerique) {
-      await client.query("ROLLBACK");
+    const produitsMap = new Map();
 
-      return res.status(400).json({
-        message: `Stock insuffisant. Stock disponible : ${produit.stock}`,
-      });
+    produitsResult.rows.forEach((produit) => {
+      produitsMap.set(produit.id, produit);
+    });
+
+    // ==================================================
+    // VÉRIFIER LES STOCKS
+    // ==================================================
+
+    for (const ligne of produitsDemandes) {
+      const produit = produitsMap.get(ligne.produit_id);
+
+      if (Number(produit.stock) < ligne.quantite) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          message:
+            `Stock insuffisant pour ${produit.nom}. ` +
+            `Stock disponible : ${produit.stock}. ` +
+            `Quantité demandée : ${ligne.quantite}.`,
+        });
+      }
     }
 
-    const prixUnitaire = Number(produit.prix);
-    const total = prixUnitaire * quantiteNumerique;
+    // ==================================================
+    // CALCUL DU TOTAL
+    // ==================================================
+
+    let total = 0;
+
+    for (const ligne of produitsDemandes) {
+      const produit = produitsMap.get(ligne.produit_id);
+
+      const prixUnitaire = Number(produit.prix);
+
+      total += prixUnitaire * ligne.quantite;
+    }
+
+    // ==================================================
+    // CRÉER LA VENTE
+    // ==================================================
 
     const venteResult = await client.query(
       `
-      INSERT INTO ventes (
-        client_id,
-        total
-      )
-      VALUES ($1, $2)
-      RETURNING
-        id,
-        client_id,
-        date_vente,
-        total
-      `,
-      [clientId, total],
+        INSERT INTO ventes (
+          client_id,
+          total,
+          utilisateur_id
+        )
+        VALUES ($1, $2, $3)
+        RETURNING
+          id,
+          client_id,
+          date_vente,
+          total
+        `,
+      [clientId, total, req.session.user.id],
     );
 
     const vente = venteResult.rows[0];
 
-    await client.query(
-      `
-      INSERT INTO details_vente (
-        vente_id,
-        produit_id,
-        quantite,
-        prix_unitaire
-      )
-      VALUES ($1, $2, $3, $4)
-      `,
-      [vente.id, produitId, quantiteNumerique, prixUnitaire],
-    );
+    // ==================================================
+    // ENREGISTRER CHAQUE PRODUIT
+    // ==================================================
 
-    const stockResult = await client.query(
-      `
-      UPDATE produits
-      SET stock = stock - $1
-      WHERE id = $2
-      RETURNING id, nom, stock
-      `,
-      [quantiteNumerique, produitId],
-    );
+    const produitsEnregistres = [];
+
+    for (const ligne of produitsDemandes) {
+      const produit = produitsMap.get(ligne.produit_id);
+
+      const prixUnitaire = Number(produit.prix);
+
+      const sousTotal = prixUnitaire * ligne.quantite;
+
+      await client.query(
+        `
+        INSERT INTO details_vente (
+          vente_id,
+          produit_id,
+          quantite,
+          prix_unitaire
+        )
+        VALUES ($1, $2, $3, $4)
+        `,
+        [vente.id, ligne.produit_id, ligne.quantite, prixUnitaire],
+      );
+
+      // ==================================================
+      // DIMINUER LE STOCK
+      // ==================================================
+
+      const stockResult = await client.query(
+        `
+          UPDATE produits
+          SET
+            stock = stock - $1
+          WHERE id = $2
+          RETURNING
+            id,
+            nom,
+            stock
+          `,
+        [ligne.quantite, ligne.produit_id],
+      );
+
+      produitsEnregistres.push({
+        produit_id: produit.id,
+
+        produit: produit.nom,
+
+        quantite: ligne.quantite,
+
+        prix_unitaire: prixUnitaire,
+
+        sous_total: sousTotal,
+
+        stock_restant: stockResult.rows[0].stock,
+      });
+    }
+
+    // ==================================================
+    // VALIDER LA TRANSACTION
+    // ==================================================
 
     await client.query("COMMIT");
 
+    // ==================================================
+    // RÉPONSE
+    // ==================================================
+
     res.status(201).json({
-      message: "Vente enregistrée avec succès",
+      message: "Commande enregistrée avec succès.",
+
       vente: {
         id: vente.id,
+
         client: clientResult.rows[0].nom_complet,
-        produit: produit.nom,
-        quantite: quantiteNumerique,
-        prix_unitaire: prixUnitaire,
+
+        produits: produitsEnregistres,
+
         total: total,
+
         date_vente: vente.date_vente,
-        stock_restant: stockResult.rows[0].stock,
+
+        vendeur: req.session.user.nom,
       },
     });
   } catch (error) {
+    // ==================================================
+    // ANNULER LA TRANSACTION EN CAS D'ERREUR
+    // ==================================================
+
     try {
       await client.query("ROLLBACK");
     } catch (rollbackError) {
       console.error("Erreur rollback :", rollbackError);
     }
 
-    console.error("Erreur enregistrement vente :", error);
+    console.error("Erreur enregistrement commande :", error);
 
     res.status(500).json({
-      message: "Impossible d'enregistrer la vente",
+      message: "Impossible d'enregistrer la commande",
       erreur: error.message,
     });
   } finally {
